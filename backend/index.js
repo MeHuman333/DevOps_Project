@@ -16,6 +16,16 @@ app.use(express.json());
 const PORT=process.env.PORT || 3000;
 const URL=process.env.URL;
 
+mongoose.connect(URL).then(() => console.log('MongoDB connected'));
+
+http.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (process.env.NODE_ENV !== 'test') {
+    http.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = { app, server: http };
+
 // const __dirname=path.resolve();
 
 // app.options("",cors({
@@ -255,6 +265,18 @@ app.post('/sendingfriendreq',authenticateJwt,async (req,res)=>{
         res.send('friend req sent');
     }
 })
+// Update the existing route or add a new one for /api/users if necessary
+app.post('/api/users', async (req, res) => {
+    const { name, password } = req.body; // Use req.body to match JSON payload format
+    try {
+        const newUser = await userlist.create({ name, password, friendList: [] });
+        const token = jwt.sign({ username: name }, SECRET, { expiresIn: '1h' });
+        res.status(201).json({ message: "User created", token, userId: newUser._id });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ message: 'Error creating user' });
+    }
+});
 
 app.post('/gettingreqsreceived',authenticateJwt,async (req,res)=>{
     let q=req.headers.name;
@@ -329,3 +351,5 @@ http.listen(PORT ,()=>{console.log("server running on port 3000")});
 
 //dotenv
 //urls
+module.exports = app;
+
